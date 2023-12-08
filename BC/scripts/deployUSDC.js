@@ -25,12 +25,17 @@ async function main() {
  await asp.deployed();
  console.log('ASP deployed at',asp.address);
 
+ const USDC = await ethers.getContractFactory("USDC");
+ const usdc = await USDC.deploy();
+ await usdc.deployed();
+ console.log('USDC deployed at',usdc.address);
 
-  // deploy CryptoMixer
-  const CryptoMixer = await ethers.getContractFactory("CryptoMixer");
-  const cryptoMixer = await CryptoMixer.deploy(hasher.address, verifier.address, asp.address);
-  await cryptoMixer.deployed();
-  console.log('CryptoMixer deployed at',cryptoMixer.address);
+
+  // deploy cryptoMixerERC20
+  const CryptoMixerERC20 = await ethers.getContractFactory("CryptoMixerERC20");
+  const cryptoMixerERC20 = await CryptoMixerERC20.deploy(hasher.address, verifier.address, asp.address, usdc.address);
+  await cryptoMixerERC20.deployed();
+  console.log('cryptoMixerERC20 deployed at',cryptoMixerERC20.address);
 }
 
 // We recommend this pattern to be able to use async/await everywhere

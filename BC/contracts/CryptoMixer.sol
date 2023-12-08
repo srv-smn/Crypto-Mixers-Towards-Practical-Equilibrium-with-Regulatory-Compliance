@@ -5,12 +5,18 @@ import "./MiMCSponge.sol";
 import "./ReentrancyGuard.sol";
 
 interface IVerifier {
-    function verifyProof(uint[2] memory a, uint[2][2] memory b, uint[2] memory c, uint[3] memory input) external;
+    function verifyProof(uint[2] memory a, uint[2][2] memory b, uint[2] memory c, uint[4] memory input) external;
 }
 
-contract Tornado is ReentrancyGuard {
+interface IASP {
+    function doesRootExist(uint256 _root) external view returns(bool)  ;
+}
+
+contract CryptoMixer is ReentrancyGuard {
     address verifier;
     Hasher hasher;
+    IASP asp;
+
 
     uint8 public treeLevel = 10;
     uint256 public denomination = 0.01 ether;
@@ -39,10 +45,12 @@ contract Tornado is ReentrancyGuard {
 
     constructor(
         address _hasher,
-        address _verifier
+        address _verifier,
+        address _asp
     ){
         hasher = Hasher(_hasher);
         verifier = _verifier;
+        asp = IASP(_asp);
     }
 
     function deposit(uint256 _commitment) external payable nonReentrant {
@@ -98,17 +106,18 @@ contract Tornado is ReentrancyGuard {
         uint[2] memory a,
         uint[2][2] memory b,
         uint[2] memory c,
-        uint[2] memory input
+        uint[3] memory input
     ) external payable nonReentrant {
         uint256 _root = input[0];
         uint256 _nullifierHash = input[1];
+        uint associationHash = input[2];
 
         require(!nullifierHashes[_nullifierHash], "already-spent");
         require(roots[_root], "not-root");
 
         uint256 _addr = uint256(uint160(msg.sender));
 
-        (bool verifyOK, ) = verifier.call(abi.encodeCall(IVerifier.verifyProof, (a, b, c, [_root, _nullifierHash, _addr])));
+        (bool verifyOK, ) = verifier.call(abi.encodeCall(IVerifier.verifyProof, (a, b, c, [_root, _nullifierHash, associationHash, _addr])));
 
         require(verifyOK, "invalid-proof");
 
@@ -118,6 +127,8 @@ contract Tornado is ReentrancyGuard {
         (bool ok, ) = target.call{ value: denomination }("");
 
         require(ok, "payment-failed");
+        require(asp.doesRootExist(associationHash));
+
 
         emit Withdrawal(msg.sender, _nullifierHash);
     }
