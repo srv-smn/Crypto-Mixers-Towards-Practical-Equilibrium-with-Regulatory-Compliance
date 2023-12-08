@@ -6,12 +6,17 @@ include "./commitment_hasher.circom";
 template Withdraw() {
     signal input root;
     signal input nullifierHash;
+    signal input associationHash; // update
     signal input recipient;
+    // signal input associationRecipient; // update
 
     signal input secret[256];
     signal input nullifier[256];
     signal input hashPairings[10];
     signal input hashDirections[10];
+
+    signal input associationHashPairings[10]; // update
+    signal input associationHashDirections[10]; // update
 
     // check if the public variable (submitted) nullifierHash is equal to the output 
     // from hashing secret and nullifier
@@ -47,10 +52,38 @@ template Withdraw() {
 
     root === currentHash[10];
 
+    // association merkle tree
+    component associationLeafHashers[10];
+
+    signal associationCurrentHash[10 + 1];
+    // associationCurrentHash[0] <== associationRecipient;
+    associationCurrentHash[0] <== cHasher.commitment;
+
+    signal associationLeft[10];
+    signal associationRight[10];
+
+    for(var i = 0; i < 10; i++){
+        var d = associationHashDirections[i];
+
+        associationLeafHashers[i] = MiMC5Sponge(2);
+
+        associationLeft[i] <== (1 - d) * associationCurrentHash[i];
+        associationLeafHashers[i].ins[0] <== associationLeft[i] + d * associationHashPairings[i];
+
+        associationRight[i] <== d * associationCurrentHash[i];
+        associationLeafHashers[i].ins[1] <== associationRight[i] + (1 - d) * associationHashPairings[i];
+
+        // associationLeafHashers[i].k <== associationRecipient;
+        associationLeafHashers[i].k <== cHasher.commitment;
+        associationCurrentHash[i + 1] <== associationLeafHashers[i].o;
+    }
+
+    associationHash === associationCurrentHash[10];
+
 
     // add recipient in the proof
     signal recipientSquare;
     recipientSquare <== recipient * recipient;
 }
 
-component main {public [root, nullifierHash, recipient]} = Withdraw();
+component main {public [root, nullifierHash, associationHash,recipient]} = Withdraw();
