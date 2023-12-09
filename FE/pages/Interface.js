@@ -1,8 +1,6 @@
 import { useState, useContext, useRef, useEffect } from "react";
 import utils from "../utils/$u.js";
 import { ethers } from "ethers";
-import { PushAPI, CONSTANTS } from "@pushprotocol/restapi";
-
 import styles from "../style/Interface.module.css";
 import AccountContext from "../utils/accountContext";
 const wc = require("../circuit/witness_calculator.js");
@@ -257,6 +255,10 @@ export default function Interface() {
       case "Third ASP":
         aspAddress = contractAddresses.usdcASP;
         break;
+
+      case "Attestation ASP":
+        aspAddress = contractAddresses.BaseASP;
+        break;
       default:
         console.error("Unknown ASP selection");
         return;
@@ -427,6 +429,52 @@ export default function Interface() {
         updateAspData(aspElements);
         tempData = aspElements;
         console.log("aspElements", aspElements);
+      } else if (asp === "Attestation ASP") {
+        var data = JSON.stringify({
+          commitment: JSON.stringify({ value: commitment.toString() }),
+          asp_address: aspAddress,
+          network: account.chainId,
+          userAddress: account.address,
+        });
+        //
+
+        var config = {
+          method: "post",
+          url: "http://localhost:8080/api/asp/check-reputation-eligliblity",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          data: data,
+        };
+        const response = await axios(config);
+        console.log("response", response);
+        const txHash = response?.data?.hash;
+        console.log("txHash", txHash);
+
+        const receipt = await waitForTransactionReceipt(txHash);
+        console.log(receipt);
+        const log = receipt.logs[0];
+
+        const decodedData = aspInterface.decodeEventLog(
+          "userAdded",
+          log.data,
+          log.topics
+        );
+
+        const aspElements = {
+          root: utils.BNToDecimal(decodedData.root),
+          hashPairing: decodedData.hashPairings.map((n) =>
+            utils.BNToDecimal(n)
+          ),
+          hashDirections: decodedData.pairDirection,
+        };
+
+        // updateAspData(btoa(JSON.stringify(aspElements)));
+        updateAspData(aspElements);
+        tempData = aspElements;
+
+        console.log("===============!!!!!!!!===============");
+        console.log("aspElements", aspElements);
       } else {
         console.log("account", account);
         var data = JSON.stringify({
@@ -558,6 +606,7 @@ export default function Interface() {
               <option value="Basic ASP">Basic ASP</option>
               <option value="Anon Adhar">Anon Adhar</option>
               <option value="Third ASP">USDC ASP</option>
+              <option value="Attestation ASP">Attestation ASP</option>
             </select>
             {/* {showTextArea && (
               <textarea

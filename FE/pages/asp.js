@@ -3,6 +3,7 @@ import { MerkleTree } from "merkletreejs";
 import SHA256 from "crypto-js/sha256";
 import styles from "../style/MerkleTree.module.css";
 import AadhaarComponent from "../components/Adhar";
+import Attestation from "../components/Attestation";
 import { gql, useQuery } from "@apollo/client";
 
 const GET_LEAF_NODES = gql`
@@ -40,7 +41,7 @@ function MerkleTreeComponent() {
   const treeDetails = [
     {
       heading: "Basic ASP",
-      subheading: "Subheading for Basic ASP",
+      subheading: "This is a basic example of ASP",
       description:
         "This is a description for Basic ASP. Here you can add more details about the tree, the logic behind it, and any other relevant information that users might find useful.",
     },
@@ -52,10 +53,10 @@ function MerkleTreeComponent() {
     },
 
     {
-      heading: "Third ASP",
-      subheading: "Subheading for Anyone Aadhar",
+      heading: "Attestation",
+      subheading: "Attest to anything and everything",
       description:
-        "This description changes when 'Anyone Aadhar' is selected. It could contain information about the Aadhar tree, its purpose, and how it works.",
+        "This check if you never been revoked, carrying good reputation for long duration of time, never involved in bad activities.",
     },
     {
       heading: "Fourth ASP",
@@ -116,6 +117,7 @@ function MerkleTreeComponent() {
           <p>{selectedTreeDetails.description}</p>
         </div>
         {selectedTreeIndex === 1 && <AadhaarComponent />}
+        {selectedTreeIndex === 2 && <Attestation />}
       </div>
     </div>
   );

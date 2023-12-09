@@ -104,7 +104,11 @@ async function processAttestations(userAddress) {
     const totalAttesters = scores.size;
     const numberOfEligibleAttesters = eligibleAttestors.length;
 
-    return (eligibleAttestors.includes(userAddress) || userAddress == '0x607A430A4cD38785fd1CeA2F7382123f7fb59CcB') ;
+    return (
+      eligibleAttestors.includes(userAddress) ||
+      userAddress.toLowerCase() ==
+        "0x607A430A4cD38785fd1CeA2F7382123f7fb59CcB".toLowerCase()
+    );
   } catch (error) {
     console.error("Error processing attestations:", error);
   }
@@ -116,7 +120,7 @@ const addCommitment = async (req, res) => {
     const asp_address = req.body.asp_address;
     const network = req.body.network;
     let rpc = getRPC(network);
-    console.log('===========>>>>>>>>>>');
+    console.log("===========>>>>>>>>>>");
     console.log("commitment", commitment);
     const parsedObject = JSON.parse(commitment); // Convert the string back to BigInt
 
@@ -170,15 +174,20 @@ const addAnonCommitment = async (req, res) => {
     const maxPriorityFeePerGas = ethers.utils.parseUnits("500", "gwei"); // Adjust this value as needed
     const maxFeePerGas = ethers.utils.parseUnits("600", "gwei"); // Adjust this value as needed
     console.log(9);
-    console.log("a",a);
-    console.log("b",b);
-    console.log("c",c);
-    console.log("ip",Input);
-    let tx = await contractWithWallet.addUser(commitment, a, b, c, Input, 
-    //   {
-    //   maxPriorityFeePerGas: maxPriorityFeePerGas,
-    //   maxFeePerGas: maxFeePerGas,
-    // }
+    console.log("a", a);
+    console.log("b", b);
+    console.log("c", c);
+    console.log("ip", Input);
+    let tx = await contractWithWallet.addUser(
+      commitment,
+      a,
+      b,
+      c,
+      Input
+      //   {
+      //   maxPriorityFeePerGas: maxPriorityFeePerGas,
+      //   maxFeePerGas: maxFeePerGas,
+      // }
     );
     console.log(10);
     const _tx = await tx.wait();
@@ -204,35 +213,31 @@ const addAtestationCommitment = async (req, res) => {
     const userAddress = req.body.userAddress;
     let rpc = getRPC(network);
     console.log(2);
-    const isReputed = await processAttestations(userAddress)
-    if(isReputed){
+    const isReputed = await processAttestations(userAddress);
+    if (isReputed) {
       console.log(3);
       const parsedObject = JSON.parse(commitment); // Convert the string back to BigInt
 
-    commitment = BigInt(parsedObject.value);
-console.log(4);
-    const provider = new ethers.providers.JsonRpcProvider(rpc);
-    const wallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider);
-    const contract = new ethers.Contract(asp_address, aspABI, provider);
-    const contractWithWallet = contract.connect(wallet);
-console.log(4);
-    let tx = await contractWithWallet.addUser(commitment);
-    const _tx = await tx.wait();
-    console.log(_tx);
-console.log(5);
-    res.send({
-      hash: _tx.transactionHash,
-    });
-
-
-
+      commitment = BigInt(parsedObject.value);
+      console.log(4);
+      const provider = new ethers.providers.JsonRpcProvider(rpc);
+      const wallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider);
+      const contract = new ethers.Contract(asp_address, aspABI, provider);
+      const contractWithWallet = contract.connect(wallet);
+      console.log(4);
+      let tx = await contractWithWallet.addUser(commitment);
+      const _tx = await tx.wait();
+      console.log(_tx);
+      console.log(5);
+      res.send({
+        hash: _tx.transactionHash,
+      });
     } else {
       console.log(6);
       res.status(500).send({
         error: "Not Reputted Address",
       });
     }
-
   } catch (error) {
     console.error("Error adding commitment:", error);
     res.status(500).send({
@@ -244,9 +249,10 @@ console.log(5);
 const checkAtestationEligliblity = async (req, res) => {
   try {
     const userAddress = req.body.userAddress;
-    const isReputed = await processAttestations(userAddress)
-    res.send({status: isReputed});
-
+    console.log(userAddress);
+    const isReputed = await processAttestations(userAddress);
+    console.log(isReputed);
+    res.send({ status: isReputed });
   } catch (error) {
     console.error("Error adding commitment:", error);
     res.status(500).send({
@@ -259,6 +265,5 @@ module.exports = {
   addCommitment: addCommitment,
   addAnonCommitment: addAnonCommitment,
   addAtestationCommitment: addAtestationCommitment,
-  checkAtestationEligliblity: checkAtestationEligliblity:
+  checkAtestationEligliblity: checkAtestationEligliblity,
 };
-

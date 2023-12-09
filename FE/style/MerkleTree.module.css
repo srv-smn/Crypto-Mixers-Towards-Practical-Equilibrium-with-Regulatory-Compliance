@@ -115,7 +115,9 @@
   gap: 20px;
   padding: 20px;
   background-color: #f4f4f9;
-    height: calc(87vh - 50px); /* Adjust this value to the actual height of your navbar */
+  height: calc(
+    87vh - 50px
+  ); /* Adjust this value to the actual height of your navbar */
   margin-top: 50px; /* Adjust this value to the actual height of your navbar */
   overflow: hidden;
 }
@@ -154,6 +156,19 @@
   border-radius: 5px;
   border: 1px solid #90caf9;
 }
+/* Attestation.module.css */
+.eligibilityButton {
+  background-color: #4caf50; /* Green */
+  color: white;
+  padding: 15px 32px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 16px;
+  margin: 4px 2px;
+  cursor: pointer;
+  border-radius: 8px;
+}
 
 /* .treeDisplay {
   flex-grow: 1;
@@ -186,9 +201,9 @@
 }
 
 .layer {
-    display: flex;
+  display: flex;
   justify-content: center; /* Center nodes horizontally */
-  align-items: center; 
+  align-items: center;
 
   margin-top: 10px;
 }
@@ -206,8 +221,8 @@
   overflow: hidden;
   white-space: nowrap;
 }
-.mainHeading{
-text-align: center;
+.mainHeading {
+  text-align: center;
 }
 .proofContainer {
   max-width: 900px;
