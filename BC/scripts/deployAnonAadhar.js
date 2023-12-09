@@ -20,8 +20,22 @@ async function main() {
  await verifier.deployed();
  console.log('Verifier deployed at',verifier.address);
 
- const ASP = await ethers.getContractFactory("ASP");
- const asp = await ASP.deploy(hasher.address);
+ // verifier for Anon
+ const VerifierAnon = await ethers.getContractFactory("Verifier");
+ const verifierAnon = await VerifierAnon.deploy();
+  await verifierAnon.deployed();
+  const _verifierAnonAddress = verifierAnon.address;
+  // Setup you appId in the smart contract
+  const appId = ethers.BigNumber.from("5de789cf-0228-4f61-8ca9-986e7c4f0fe7").toString();
+
+
+ const AnonAadhaarVerifier = await ethers.getContractFactory("AnonAadhaarVerifier");
+ const anonAadhaarVerifier = await AnonAadhaarVerifier.deploy(_verifierAnonAddress, appId);
+ await anonAadhaarVerifier.deployed();
+ console.log('anonAadhaarVerifier deployed at',anonAadhaarVerifier.address);
+
+ const ASP = await ethers.getContractFactory("AnonASP");
+ const asp = await ASP.deploy(hasher.address, anonAadhaarVerifier.address);
  await asp.deployed();
  console.log('ASP deployed at',asp.address);
 
@@ -31,24 +45,7 @@ async function main() {
   const cryptoMixer = await CryptoMixer.deploy(hasher.address, verifier.address, asp.address);
   await cryptoMixer.deployed();
   console.log('CryptoMixer deployed at',cryptoMixer.address);
-
-  // Verify contracts
-  await verifyContract("Hasher", hasher.address);
-  await verifyContract("Groth16Verifier", verifier.address);
-  await verifyContract("ASP", asp.address, [hasher.address]);
-  await verifyContract("CryptoMixer", cryptoMixer.address, [hasher.address, verifier.address, asp.address]);
-  
 }
-
-async function verifyContract(contractName, contractAddress, constructorArguments = []) {
-  console.log(`Verifying ${contractName} at ${contractAddress}...`);
-  await hre.run("verify:verify", {
-    address: contractAddress,
-    constructorArguments: constructorArguments,
-  });
-  console.log(`${contractName} verified successfully!`);
-}
-
 
 // We recommend this pattern to be able to use async/await everywhere
 // and properly handle errors.
