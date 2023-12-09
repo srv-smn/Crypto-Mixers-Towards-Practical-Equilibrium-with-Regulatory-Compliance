@@ -1,9 +1,10 @@
 import Navbar from "./Navbar";
 import React, { useState } from "react";
 import utils from "../utils/$u";
-import AccountContext from "../utils/accountContext";
+import AccountContext from "../utils/accountContext"; // Adjust the path as necessary
 
 import { ethers } from "ethers";
+// Adjust the path if your Navbar component is elsewhere
 import styles from "../style/Navbar.module.css";
 const Layout = ({ children }) => {
   const [account, updateAccount] = useState(null);

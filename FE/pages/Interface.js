@@ -7,23 +7,25 @@ const wc = require("../circuit/witness_calculator.js");
 const cryptoMixerJSON = require("../json/CryptoMixer.json");
 const cryptoMixerABI = cryptoMixerJSON.abi;
 const cryptoMixerInterface = new ethers.utils.Interface(cryptoMixerABI);
+var axios = require("axios");
 const aspJSON = require("../json/Asp.json");
 const aspABI = aspJSON.abi;
 const aspInterface = new ethers.utils.Interface(aspABI);
-let tempData = null;
 const erc20ABI = [
   "function approve(address spender, uint256 amount) external returns (bool)",
 ];
+let tempData = null;
+
 export default function Interface() {
   const proofTextAreaRef = useRef(null);
-  const withdrawTextAreaRef = useRef(null);
-
+  const withdrawTextAreaRef = useRef(null); // Add this line to declare withdrawTextAreaRef
+  const [showTextArea, setShowTextArea] = useState(false); // New state to track textarea visibility
   const [activeTab, setActiveTab] = useState("deposit");
   const [token, setToken] = useState("ETH");
   const [amount, setAmount] = useState("0.01");
-  const { account } = useContext(AccountContext);
+  const {account } = useContext(AccountContext);
   const [proofElements, updateProofElements] = useState(null);
-  const [asp, setAsp] = useState("ASP1");
+  const [asp, setAsp] = useState("Basic ASP");
   const [withdrawProof, setWithdrawProof] = useState("");
   const [aspData, updateAspData] = useState(null);
   const [contractAddresses, setContractAddresses] = useState({});
@@ -46,9 +48,14 @@ export default function Interface() {
     if (account && account.chainId) {
       loadAddresses();
     }
-  }, [account]);
+  }, [account]); 
 
-  const handleTokenChange = async (e) => {
+
+    const handleASPChange = (e) => {
+    setAsp(e.target.value);
+    setShowTextArea(true); 
+  };
+   const handleTokenChange = async (e) => {
     const selectedToken = e.target.value;
     setToken(selectedToken);
     setAmount(selectedToken === "ETH" ? "0.01" : "1000");
@@ -67,14 +74,14 @@ export default function Interface() {
       const signer = provider.getSigner();
 
       const usdcContract = new ethers.Contract(
-        contractAddresses.contracts.USDC.erc20,
+        contractAddresses.usdc,
         erc20ABI,
         signer
       );
 
       const amountToApprove = ethers.utils.parseUnits("1000", 6);
       const tx = await usdcContract.approve(
-        contractAddresses.contracts.USDC.cryptoMixer,
+        contractAddresses.usdcMixer,
         amountToApprove
       );
       await tx.wait();
@@ -85,7 +92,6 @@ export default function Interface() {
     }
   };
   const depositUSDC = async () => {
-    console.log("cryptoMixer", contractAddresses.contracts.USDC.cryptoMixer);
     const secret = ethers.BigNumber.from(
       ethers.utils.randomBytes(32)
     ).toString();
@@ -108,9 +114,8 @@ export default function Interface() {
     const nullifierHash = r[2];
     console.log("commitment", commitment);
 
-    // const value = ethers.BigNumber.from("10000000000000000").toHexString();
     const tx = {
-      to: contractAddresses.cryptoMixer,
+      to: contractAddresses.usdcMixer,
       from: account.address,
       data: cryptoMixerInterface.encodeFunctionData("deposit", [commitment]),
     };
@@ -157,14 +162,14 @@ export default function Interface() {
       });
 
       if (receipt !== null) {
-        return receipt;
+        return receipt; 
       }
 
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      await new Promise((resolve) => setTimeout(resolve, 1000)); 
     }
   }
+
   const depositEther = async () => {
-    console.log("cryptoMixer", contractAddresses.cryptoMixer);
     const secret = ethers.BigNumber.from(
       ethers.utils.randomBytes(32)
     ).toString();
@@ -189,7 +194,7 @@ export default function Interface() {
 
     const value = ethers.BigNumber.from("10000000000000000").toHexString();
     const tx = {
-      to: contractAddresses.cryptoMixer,
+      to: contractAddresses.EthMixer,
       from: account.address,
       value: value,
       data: cryptoMixerInterface.encodeFunctionData("deposit", [commitment]),
@@ -229,9 +234,10 @@ export default function Interface() {
     console.log(commitment, nullifierHash);
   };
   const withdraw = async () => {
-    console.log("log1");
-    console.log("log2");
-
+const mixerAddress =
+      token === "USDC"
+        ? contractAddresses.usdcMixer
+        : contractAddresses.EthMixer;
     const withdrawProofValue = withdrawTextAreaRef.current
       ? withdrawTextAreaRef.current.value
       : "";
@@ -266,9 +272,15 @@ export default function Interface() {
       console.log("oooooo", r);
       await callASP(commitment);
 
+      //         receipt = await window.ethereum.request({ method: "eth_getTransactionReceipt", params: [proofElements.txHash] });
+      //         if(!receipt){ throw "empty-receipt"; }
+
+      //         const log = receipt.logs[0];
+      //         const decodedData = cryptoMixerInterface.decodeEventLog("Deposit", log.data, log.topics);
       console.log(1);
       const SnarkJS = window["snarkjs"];
       console.log(2);
+      // console.log(aspData);
       console.log(tempData);
       const proofInput = {
         root: proofElements.root, //utils.BNToDecimal(decodedData.root),
@@ -308,7 +320,7 @@ export default function Interface() {
         callInputs
       );
       const tx = {
-        to: contractAddresses.cryptoMixer,
+        to: mixerAddress,
         from: account.address,
         data: callData,
       };
@@ -317,25 +329,56 @@ export default function Interface() {
         params: [tx],
       });
       const receipt = await waitForTransactionReceipt(txHash);
+
+    
     } catch (e) {
       console.log(e);
     }
+
   };
 
   const callASP = async (commitment) => {
-    console.log("comm", commitment);
 
-    const tx = {
-      to: contractAddresses.asp,
-      from: account.address,
-      data: aspInterface.encodeFunctionData("addUser", [commitment]),
-    };
+    let aspAddress;
+    switch (asp) {
+      case "Basic ASP":
+        aspAddress = contractAddresses.BaseASP;
+        break;
+      case "Anon Adhar":
+        aspAddress = contractAddresses.aadharASP;
+        break;
+      case "Third ASP":
+        aspAddress = contractAddresses.usdcASP;
+        break;
+      default:
+        console.error("Unknown ASP selection");
+        return;
+    }
+ 
 
     try {
-      const txHash = await window.ethereum.request({
-        method: "eth_sendTransaction",
-        params: [tx],
+
+      console.log("account", account);
+      var data = JSON.stringify({
+        commitment: JSON.stringify({ value: commitment.toString() }),
+        asp_address: aspAddress,
+        network: account.chainId,
       });
+
+      var config = {
+        method: "post",
+        url: "http://localhost:8080/api/asp/add-commitment",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        data: data,
+      };
+      console.log("13333389y73843848374");
+      const response = await axios(config);
+      console.log("response",response);
+      const txHash = response?.data?.hash;
+      console.log("txHash", txHash);
+
       const receipt = await waitForTransactionReceipt(txHash);
       console.log(receipt);
       const log = receipt.logs[0];
@@ -366,10 +409,9 @@ export default function Interface() {
   };
 
   const copyProof = () => {
-    // Check if the text area exists
     if (proofTextAreaRef.current) {
-      proofTextAreaRef.current.select(); // Select the text inside the text area
-      document.execCommand("copy"); // Execute the copy command
+      proofTextAreaRef.current.select(); 
+      document.execCommand("copy"); 
     }
   };
 
@@ -439,15 +481,25 @@ export default function Interface() {
             />
 
             <label htmlFor="asp">ASP</label>
-            <select
+             <select
               id="asp"
               value={asp}
               onChange={(e) => setAsp(e.target.value)}
             >
-              <option value="ASP1">ASP1</option>
+              <option value="Basic ASP">Basic ASP</option>
+              <option value="Anon Adhar">Anon Adhar</option>
+              <option value="Third ASP">Third ASP</option>
             </select>
+              {showTextArea && (
+              <textarea rows="4" cols="50"
+                placeholder="Enter additional proof or data here"
+              />
+            )}
 
-            <button onClick={withdraw} className={styles.withdrawButton}>
+            <button
+              onClick={withdraw}
+              className={styles.withdrawButton}
+            >
               Withdraw
             </button>
           </>

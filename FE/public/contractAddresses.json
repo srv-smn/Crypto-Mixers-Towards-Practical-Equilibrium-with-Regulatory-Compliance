@@ -35,16 +35,11 @@
     "erc20": ""
   },
   "80001": {
-    "contracts": {
-      "ETH": {
-        "cryptoMixer": "0x41332a5b45833a2F441a7374F40fC6BAb1e5B06E",
-        "asp": "0x4E2D3709B832f704A2c872d2913Bca180c534F1B"
-      },
-      "USDC": {
-        "cryptoMixer": "0xB1C278415AdE5DD95381c3B280E4bA1289F0Da5b",
-        "asp": "0xDE38EC85Ed35A530644d3FEBc296D0b13BC78674",
-        "erc20": "0x2755876B1504808504D9a59c12346e7441DD349F"
-      }
-    }
+    "usdc": "0x2755876B1504808504D9a59c12346e7441DD349F",
+    "usdcMixer": "0xB1C278415AdE5DD95381c3B280E4bA1289F0Da5b",
+    "usdcASP": "0xDE38EC85Ed35A530644d3FEBc296D0b13BC78674",
+    "BaseASP": "0x4E2D3709B832f704A2c872d2913Bca180c534F1B",
+    "aadharASP": "",
+    "EthMixer": "0x41332a5b45833a2F441a7374F40fC6BAb1e5B06E"
   }
 }
