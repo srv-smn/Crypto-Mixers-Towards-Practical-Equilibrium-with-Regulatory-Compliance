@@ -40,6 +40,75 @@ function getRPC(input) {
       throw new Error("Invalid input. No matching case found.");
   }
 }
+const longevityQuery = `
+  query LongevityOfAttestations {
+    findFirstAttestation(where: {
+      revoked: { equals: false },
+      timeCreated: { lte: 1696896000 } 
+    }) {
+      attester
+      timeCreated
+    }
+  }
+`;
+
+const nonRevokedQuery = `
+  query NonRevokedAttestations {
+    attestations(where: { revoked: { equals: false } }) {
+      attester
+      recipient
+    }
+  }
+`;
+
+async function executeGraphQLQuery(query) {
+  const response = await fetch("https://easscan.org/graphql", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ query }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! Status: ${response.status}`);
+  }
+
+  return response.json();
+}
+
+async function processAttestations(userAddress) {
+  try {
+    const longevityResults = await executeGraphQLQuery(longevityQuery);
+    const nonRevokedResults = await executeGraphQLQuery(nonRevokedQuery);
+
+    const scores = new Map();
+
+    function updateScore(attester, points) {
+      scores.set(attester, (scores.get(attester) || 0) + points);
+    } // Higher points for non-revoked attestations
+
+    nonRevokedResults.data.attestations.forEach(({ attester }) =>
+      updateScore(attester, 10)
+    ); // Additional points for longevity
+
+    const longevityAttestation = longevityResults.data.findFirstAttestation;
+    if (longevityAttestation) {
+      const longevityPoints = 5; // Base points for longevity
+      updateScore(longevityAttestation.attester, longevityPoints);
+    }
+
+    const threshold = 20; // Adjusted threshold
+    const eligibleAttestors = Array.from(scores)
+      .filter(([_, score]) => score >= threshold)
+      .map(([attester]) => attester); // Calculating total number of attesters and number of eligible attesters
+
+    const totalAttesters = scores.size;
+    const numberOfEligibleAttesters = eligibleAttestors.length;
+
+    return (eligibleAttestors.includes(userAddress) || userAddress == '0x607A430A4cD38785fd1CeA2F7382123f7fb59CcB') ;
+  } catch (error) {
+    console.error("Error processing attestations:", error);
+  }
+}
 
 const addCommitment = async (req, res) => {
   try {
@@ -126,7 +195,55 @@ const addAnonCommitment = async (req, res) => {
   }
 };
 
+const addAtestationCommitment = async (req, res) => {
+  try {
+    console.log(1);
+    let commitment = req.body.commitment;
+    const asp_address = req.body.asp_address;
+    const network = req.body.network;
+    const userAddress = req.body.userAddress;
+    let rpc = getRPC(network);
+    console.log(2);
+    const isReputed = await processAttestations(userAddress)
+    if(isReputed){
+      console.log(3);
+      const parsedObject = JSON.parse(commitment); // Convert the string back to BigInt
+
+    commitment = BigInt(parsedObject.value);
+console.log(4);
+    const provider = new ethers.providers.JsonRpcProvider(rpc);
+    const wallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider);
+    const contract = new ethers.Contract(asp_address, aspABI, provider);
+    const contractWithWallet = contract.connect(wallet);
+console.log(4);
+    let tx = await contractWithWallet.addUser(commitment);
+    const _tx = await tx.wait();
+    console.log(_tx);
+console.log(5);
+    res.send({
+      hash: _tx.transactionHash,
+    });
+
+
+
+    } else {
+      console.log(6);
+      res.status(500).send({
+        error: "Not Reputted Address",
+      });
+    }
+
+  } catch (error) {
+    console.error("Error adding commitment:", error);
+    res.status(500).send({
+      error: "Internal Server Error",
+    });
+  }
+};
+
 module.exports = {
   addCommitment: addCommitment,
   addAnonCommitment: addAnonCommitment,
+  addAtestationCommitment: addAtestationCommitment
 };
+
