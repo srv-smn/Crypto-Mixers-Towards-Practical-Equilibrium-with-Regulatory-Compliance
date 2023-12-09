@@ -15,20 +15,30 @@ const erc20ABI = [
   "function approve(address spender, uint256 amount) external returns (bool)",
 ];
 let tempData = null;
+import { serialize } from "anon-aadhaar-pcd";
+import { useAnonAadhaar } from "anon-aadhaar-react";
 
 export default function Interface() {
   const proofTextAreaRef = useRef(null);
+  const [anonAadhaar] = useAnonAadhaar();
   const withdrawTextAreaRef = useRef(null); // Add this line to declare withdrawTextAreaRef
   const [showTextArea, setShowTextArea] = useState(false); // New state to track textarea visibility
   const [activeTab, setActiveTab] = useState("deposit");
   const [token, setToken] = useState("ETH");
   const [amount, setAmount] = useState("0.01");
-  const {account } = useContext(AccountContext);
+  const { account } = useContext(AccountContext);
   const [proofElements, updateProofElements] = useState(null);
   const [asp, setAsp] = useState("Basic ASP");
   const [withdrawProof, setWithdrawProof] = useState("");
+  const [proof, setProof] = useState("");
   const [aspData, updateAspData] = useState(null);
   const [contractAddresses, setContractAddresses] = useState({});
+
+  useEffect(() => {
+    if (anonAadhaar.status === "logged-in") {
+      console.log("anonAadhaar.pcd=====>", anonAadhaar.pcd);
+    }
+  }, [anonAadhaar]);
 
   useEffect(() => {
     async function loadAddresses() {
@@ -48,14 +58,13 @@ export default function Interface() {
     if (account && account.chainId) {
       loadAddresses();
     }
-  }, [account]); 
+  }, [account]);
 
-
-    const handleASPChange = (e) => {
+  const handleASPChange = (e) => {
     setAsp(e.target.value);
-    setShowTextArea(true); 
+    setShowTextArea(true);
   };
-   const handleTokenChange = async (e) => {
+  const handleTokenChange = async (e) => {
     const selectedToken = e.target.value;
     setToken(selectedToken);
     setAmount(selectedToken === "ETH" ? "0.01" : "1000");
@@ -162,10 +171,10 @@ export default function Interface() {
       });
 
       if (receipt !== null) {
-        return receipt; 
+        return receipt;
       }
 
-      await new Promise((resolve) => setTimeout(resolve, 1000)); 
+      await new Promise((resolve) => setTimeout(resolve, 1000));
     }
   }
 
@@ -234,7 +243,7 @@ export default function Interface() {
     console.log(commitment, nullifierHash);
   };
   const withdraw = async () => {
-const mixerAddress =
+    const mixerAddress =
       token === "USDC"
         ? contractAddresses.usdcMixer
         : contractAddresses.EthMixer;
@@ -329,16 +338,12 @@ const mixerAddress =
         params: [tx],
       });
       const receipt = await waitForTransactionReceipt(txHash);
-
-    
     } catch (e) {
       console.log(e);
     }
-
   };
 
   const callASP = async (commitment) => {
-
     let aspAddress;
     switch (asp) {
       case "Basic ASP":
@@ -354,55 +359,79 @@ const mixerAddress =
         console.error("Unknown ASP selection");
         return;
     }
- 
 
     try {
+      if (asp === "Anon Adhar") {
+        console.log("serialize(proof)", anonAadhaar.pcd);
+        var data = JSON.stringify({
+          commitment: JSON.stringify({ value: commitment.toString() }),
+          asp_address: aspAddress,
+          network: account.chainId,
+          proof: anonAadhaar.pcd,
+        });
+        //
 
-      console.log("account", account);
-      var data = JSON.stringify({
-        commitment: JSON.stringify({ value: commitment.toString() }),
-        asp_address: aspAddress,
-        network: account.chainId,
-      });
+        var config = {
+          method: "post",
+          url: "http://localhost:8080/api/asp/add-anon-commitment",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          data: data,
+        };
+        const response = await axios(config);
+        console.log(response);
+        console.log("Anon Adhar logic executed");
+      } else {
+        console.log("account", account);
+        var data = JSON.stringify({
+          commitment: JSON.stringify({ value: commitment.toString() }),
+          asp_address: aspAddress,
+          network: account.chainId,
+        });
+        //
 
-      var config = {
-        method: "post",
-        url: "http://localhost:8080/api/asp/add-commitment",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        data: data,
-      };
-      console.log("13333389y73843848374");
-      const response = await axios(config);
-      console.log("response",response);
-      const txHash = response?.data?.hash;
-      console.log("txHash", txHash);
+        var config = {
+          method: "post",
+          url: "http://localhost:8080/api/asp/add-commitment",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          data: data,
+        };
+        console.log("13333389y73843848374");
+        const response = await axios(config);
+        console.log("response", response);
+        const txHash = response?.data?.hash;
+        console.log("txHash", txHash);
 
-      const receipt = await waitForTransactionReceipt(txHash);
-      console.log(receipt);
-      const log = receipt.logs[0];
+        const receipt = await waitForTransactionReceipt(txHash);
+        console.log(receipt);
+        const log = receipt.logs[0];
 
-      const decodedData = aspInterface.decodeEventLog(
-        "userAdded",
-        log.data,
-        log.topics
-      );
+        const decodedData = aspInterface.decodeEventLog(
+          "userAdded",
+          log.data,
+          log.topics
+        );
 
-      const aspElements = {
-        root: utils.BNToDecimal(decodedData.root),
-        hashPairing: decodedData.hashPairings.map((n) => utils.BNToDecimal(n)),
-        hashDirections: decodedData.pairDirection,
-      };
+        const aspElements = {
+          root: utils.BNToDecimal(decodedData.root),
+          hashPairing: decodedData.hashPairings.map((n) =>
+            utils.BNToDecimal(n)
+          ),
+          hashDirections: decodedData.pairDirection,
+        };
 
-      // updateAspData(btoa(JSON.stringify(aspElements)));
-      updateAspData(aspElements);
-      tempData = aspElements;
+        // updateAspData(btoa(JSON.stringify(aspElements)));
+        updateAspData(aspElements);
+        tempData = aspElements;
 
-      console.log("===============!!!!!!!!===============");
-      console.log("aspElements", aspElements);
-      // console.log('btoa(JSON.stringify(aspElements))',btoa(JSON.stringify(aspElements)));
-      console.log("================!!!!!!!!!!!==============");
+        console.log("===============!!!!!!!!===============");
+        console.log("aspElements", aspElements);
+        // console.log('btoa(JSON.stringify(aspElements))',btoa(JSON.stringify(aspElements)));
+        console.log("================!!!!!!!!!!!==============");
+      }
     } catch (error) {
       console.log(error);
     }
@@ -410,8 +439,8 @@ const mixerAddress =
 
   const copyProof = () => {
     if (proofTextAreaRef.current) {
-      proofTextAreaRef.current.select(); 
-      document.execCommand("copy"); 
+      proofTextAreaRef.current.select();
+      document.execCommand("copy");
     }
   };
 
@@ -479,27 +508,22 @@ const mixerAddress =
               onChange={(e) => setWithdrawProof(e.target.value)} // Update state on change
               placeholder="Paste the deposit proof here"
             />
-
             <label htmlFor="asp">ASP</label>
-             <select
-              id="asp"
-              value={asp}
-              onChange={(e) => setAsp(e.target.value)}
-            >
+            <select id="asp" value={asp} onChange={handleASPChange}>
               <option value="Basic ASP">Basic ASP</option>
               <option value="Anon Adhar">Anon Adhar</option>
               <option value="Third ASP">Third ASP</option>
             </select>
-              {showTextArea && (
-              <textarea rows="4" cols="50"
+            {showTextArea && (
+              <textarea
+                value={proof}
+                onChange={(e) => setProof(e.target.value)}
+                rows="4"
+                cols="50"
                 placeholder="Enter additional proof or data here"
               />
             )}
-
-            <button
-              onClick={withdraw}
-              className={styles.withdrawButton}
-            >
+            <button onClick={withdraw} className={styles.withdrawButton}>
               Withdraw
             </button>
           </>
