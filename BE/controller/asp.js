@@ -1,6 +1,8 @@
 const ethers = require("ethers");
 const aspJSON = require("../abi/asp.json");
+const anonAspJSON = require("../abi/asp.json");
 const aspABI = aspJSON.abi;
+const anonAspABI = anonAspJSON.abi;
 require("dotenv").config();
 
 function getRPC(input) {
@@ -81,7 +83,7 @@ const addAnonCommitment = async (req, res) => {
 
     const provider = new ethers.providers.JsonRpcProvider(rpc);
     const wallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider);
-    const contract = new ethers.Contract(asp_address, aspABI, provider);
+    const contract = new ethers.Contract(asp_address, anonAspABI, provider);
     const contractWithWallet = contract.connect(wallet);
 
     let tx = await contractWithWallet.addUser(commitment, proof._pA, proof._pB, proof._pC, proof._pubSignals);
