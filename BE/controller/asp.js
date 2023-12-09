@@ -3,6 +3,11 @@ const aspJSON = require("../abi/asp.json");
 const anonAspJSON = require("../abi/anonAsp.json");
 const aspABI = aspJSON.abi;
 const anonAspABI = anonAspJSON.abi;
+const {
+  AnonAadhaarPCD,
+  exportCallDataGroth16FromPCD,
+} = require("anon-aadhaar-pcd");
+
 require("dotenv").config();
 
 function getRPC(input) {
@@ -43,9 +48,8 @@ const addCommitment = async (req, res) => {
     const network = req.body.network;
     let rpc = getRPC(network);
     console.log("commitment", commitment);
-    const parsedObject = JSON.parse(commitment);
+    const parsedObject = JSON.parse(commitment); // Convert the string back to BigInt
 
-    // Convert the string back to BigInt
     commitment = BigInt(parsedObject.value);
 
     const provider = new ethers.providers.JsonRpcProvider(rpc);
@@ -73,20 +77,33 @@ const addAnonCommitment = async (req, res) => {
     let commitment = req.body.commitment;
     const asp_address = req.body.asp_address;
     const network = req.body.network;
-    const proof = req.body.proof;
     let rpc = getRPC(network);
+
     console.log("commitment", commitment);
+
     const parsedObject = JSON.parse(commitment);
 
-    // Convert the string back to BigInt
     commitment = BigInt(parsedObject.value);
 
     const provider = new ethers.providers.JsonRpcProvider(rpc);
+
     const wallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider);
+
     const contract = new ethers.Contract(asp_address, anonAspABI, provider);
+
     const contractWithWallet = contract.connect(wallet);
 
-    let tx = await contractWithWallet.addUser(commitment, proof._pA, proof._pB, proof._pC, proof._pubSignals);
+    const { a, b, c, Input } = await exportCallDataGroth16FromPCD(
+      req.body.proof
+    );
+    const maxPriorityFeePerGas = ethers.utils.parseUnits("500", "gwei"); // Adjust this value as needed
+    const maxFeePerGas = ethers.utils.parseUnits("600", "gwei"); // Adjust this value as needed
+
+    let tx = await contractWithWallet.addUser(commitment, a, b, c, Input, {
+      maxPriorityFeePerGas: maxPriorityFeePerGas,
+      maxFeePerGas: maxFeePerGas,
+    });
+
     const _tx = await tx.wait();
     console.log(_tx);
 
