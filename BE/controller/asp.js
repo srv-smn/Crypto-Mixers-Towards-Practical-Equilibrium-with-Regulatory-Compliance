@@ -241,9 +241,24 @@ console.log(5);
   }
 };
 
+const checkAtestationEligliblity = async (req, res) => {
+  try {
+    const userAddress = req.body.userAddress;
+    const isReputed = await processAttestations(userAddress)
+    res.send({status: isReputed});
+
+  } catch (error) {
+    console.error("Error adding commitment:", error);
+    res.status(500).send({
+      error: "Internal Server Error",
+    });
+  }
+};
+
 module.exports = {
   addCommitment: addCommitment,
   addAnonCommitment: addAnonCommitment,
-  addAtestationCommitment: addAtestationCommitment
+  addAtestationCommitment: addAtestationCommitment,
+  checkAtestationEligliblity: checkAtestationEligliblity:
 };
 
