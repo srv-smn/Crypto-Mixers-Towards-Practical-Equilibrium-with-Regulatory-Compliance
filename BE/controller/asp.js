@@ -22,7 +22,7 @@ function getRPC(input) {
       return "https://goerli-rollup.arbitrum.io/rpc"; // arbitrumGoerli
 
     case "80001":
-      return "https://rpc.ankr.com/polygon_mumbai"; // mumbai
+      return "https://polygon-mumbai-bor.publicnode.com"; // mumbai
 
     case "44787":
       return "https://alfajores-forno.celo-testnet.org"; // celo
@@ -47,6 +47,7 @@ const addCommitment = async (req, res) => {
     const asp_address = req.body.asp_address;
     const network = req.body.network;
     let rpc = getRPC(network);
+    console.log('===========>>>>>>>>>>');
     console.log("commitment", commitment);
     const parsedObject = JSON.parse(commitment); // Convert the string back to BigInt
 
@@ -78,32 +79,39 @@ const addAnonCommitment = async (req, res) => {
     const asp_address = req.body.asp_address;
     const network = req.body.network;
     let rpc = getRPC(network);
-
+    console.log(0.1);
     console.log("commitment", commitment);
-
+    console.log(1);
     const parsedObject = JSON.parse(commitment);
-
+    console.log(2);
     commitment = BigInt(parsedObject.value);
-
+    console.log(3);
     const provider = new ethers.providers.JsonRpcProvider(rpc);
-
+    console.log(4);
     const wallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider);
-
+    console.log(5);
     const contract = new ethers.Contract(asp_address, anonAspABI, provider);
-
+    console.log(6);
     const contractWithWallet = contract.connect(wallet);
-
+    console.log(7);
     const { a, b, c, Input } = await exportCallDataGroth16FromPCD(
       req.body.proof
     );
+    console.log(8);
     const maxPriorityFeePerGas = ethers.utils.parseUnits("500", "gwei"); // Adjust this value as needed
     const maxFeePerGas = ethers.utils.parseUnits("600", "gwei"); // Adjust this value as needed
-
-    let tx = await contractWithWallet.addUser(commitment, a, b, c, Input, {
-      maxPriorityFeePerGas: maxPriorityFeePerGas,
-      maxFeePerGas: maxFeePerGas,
-    });
-
+    console.log(9);
+    console.log("a",a);
+    console.log("b",b);
+    console.log("c",c);
+    console.log("ip",Input);
+    let tx = await contractWithWallet.addUser(commitment, a, b, c, Input, 
+    //   {
+    //   maxPriorityFeePerGas: maxPriorityFeePerGas,
+    //   maxFeePerGas: maxFeePerGas,
+    // }
+    );
+    console.log(10);
     const _tx = await tx.wait();
     console.log(_tx);
 
