@@ -31,7 +31,24 @@ async function main() {
   const cryptoMixer = await CryptoMixer.deploy(hasher.address, verifier.address, asp.address);
   await cryptoMixer.deployed();
   console.log('CryptoMixer deployed at',cryptoMixer.address);
+
+  // Verify contracts
+  await verifyContract("Hasher", hasher.address);
+  await verifyContract("Groth16Verifier", verifier.address);
+  await verifyContract("ASP", asp.address, [hasher.address]);
+  await verifyContract("CryptoMixer", cryptoMixer.address, [hasher.address, verifier.address, asp.address]);
+  
 }
+
+async function verifyContract(contractName, contractAddress, constructorArguments = []) {
+  console.log(`Verifying ${contractName} at ${contractAddress}...`);
+  await hre.run("verify:verify", {
+    address: contractAddress,
+    constructorArguments: constructorArguments,
+  });
+  console.log(`${contractName} verified successfully!`);
+}
+
 
 // We recommend this pattern to be able to use async/await everywhere
 // and properly handle errors.
