@@ -1,0 +1,73 @@
+.gridContainer {
+  display: grid;
+  grid-template-columns: repeat(
+    3,
+    minmax(250px, 1fr)
+  ); /* Four trees per row with a minimum width of 250px */
+  gap: 40px; /* Increased gap for better spacing */
+  padding: 20px;
+  justify-items: center; /* Center each tree in its grid cell */
+  align-content: start; /* Align content to the start */
+  background-color: #f4f4f9;
+}
+
+.treeWrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center; /* Center the tree and caption */
+}
+
+.tree {
+  padding: 20px;
+  border-radius: 10px;
+  background-color: white;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  overflow-y: auto; /* Scrollable Y-axis if content overflows */
+  margin-bottom: 10px; /* Space between the tree and its caption */
+}
+
+.treeCaption {
+  font-size: 14px;
+  color: #333;
+  margin-top: 0;
+  margin-bottom: 20px; /* Spacing after caption */
+}
+
+.layer {
+  display: flex;
+  justify-content: center;
+  margin-top: 10px;
+}
+
+.node {
+  margin: 0 10px;
+  padding: 5px 10px;
+  background-color: #e3f2fd;
+  border: 1px solid #90caf9;
+  border-radius: 8px;
+  font-size: 14px;
+  word-break: break-all;
+  text-align: center;
+  max-width: 80px;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.layer0 {
+  color: #0d47a1;
+  font-weight: bold;
+}
+
+.layer1 {
+  color: #1976d2;
+}
+.layer2 {
+  color: #2196f3;
+}
+.layer3 {
+  color: #64b5f6;
+}
+.layer4 {
+  color: #bbdefb;
+  font-style: italic;
+}
