@@ -26,7 +26,7 @@ async function main() {
   await verifierAnon.deployed();
   const _verifierAnonAddress = verifierAnon.address;
   // Setup you appId in the smart contract
-  const appId = ethers.BigNumber.from("5de789cf-0228-4f61-8ca9-986e7c4f0fe7").toString();
+  const appId = ethers.BigNumber.from("650010406386009349199801826845867124209471193088").toString();
 
 
  const AnonAadhaarVerifier = await ethers.getContractFactory("AnonAadhaarVerifier");
