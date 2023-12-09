@@ -13,12 +13,15 @@ const Navbar = ({ account, connectMetamask }) => {
           <Link href="/asp" legacyBehavior>
             <a className={styles.navItem}>Asp</a>
           </Link>
-          {/* Add other links if necessary */}
         </div>
         <div className={styles.contact}>
-          <button onClick={connectMetamask} className={styles.contactButton}>
-            Contact
-          </button>
+          {account ? (
+            <button className={styles.contactButton}>Connected</button>
+          ) : (
+            <button onClick={connectMetamask} className={styles.contactButton}>
+              Connect Wallet
+            </button>
+          )}
         </div>
       </nav>
     </div>

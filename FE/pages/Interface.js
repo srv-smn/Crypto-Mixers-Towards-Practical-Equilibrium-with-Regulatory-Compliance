@@ -1,6 +1,8 @@
 import { useState, useContext, useRef, useEffect } from "react";
 import utils from "../utils/$u.js";
 import { ethers } from "ethers";
+import { PushAPI, CONSTANTS } from "@pushprotocol/restapi";
+
 import styles from "../style/Interface.module.css";
 import AccountContext from "../utils/accountContext";
 const wc = require("../circuit/witness_calculator.js");
@@ -17,6 +19,7 @@ const erc20ABI = [
 let tempData = null;
 import { serialize } from "anon-aadhaar-pcd";
 import { useAnonAadhaar } from "anon-aadhaar-react";
+const signer = ethers.Wallet.createRandom();
 
 export default function Interface() {
   const proofTextAreaRef = useRef(null);
@@ -24,13 +27,13 @@ export default function Interface() {
   const withdrawTextAreaRef = useRef(null); // Add this line to declare withdrawTextAreaRef
   const [showTextArea, setShowTextArea] = useState(false); // New state to track textarea visibility
   const [activeTab, setActiveTab] = useState("deposit");
-  const [token, setToken] = useState("ETH");
+  const [token, setToken] = useState("Native Token");
   const [amount, setAmount] = useState("0.01");
   const { account } = useContext(AccountContext);
   const [proofElements, updateProofElements] = useState(null);
   const [asp, setAsp] = useState("Basic ASP");
   const [withdrawProof, setWithdrawProof] = useState("");
-  const [proof, setProof] = useState("");
+  // const [proof, setProof] = useState("");
   const [aspData, updateAspData] = useState(null);
   const [contractAddresses, setContractAddresses] = useState({});
 
@@ -67,7 +70,7 @@ export default function Interface() {
   const handleTokenChange = async (e) => {
     const selectedToken = e.target.value;
     setToken(selectedToken);
-    setAmount(selectedToken === "ETH" ? "0.01" : "1000");
+    setAmount(selectedToken === "Native Token" ? "0.01" : "1000");
   };
   const deposit = async () => {
     if (token === "USDC") {
@@ -137,7 +140,7 @@ export default function Interface() {
 
       const receipt = await waitForTransactionReceipt(txHash);
       console.log(receipt);
-      const log = receipt.logs[1];
+      const log = receipt.logs[2];
 
       const decodedData = cryptoMixerInterface.decodeEventLog(
         "Deposit",
@@ -243,6 +246,21 @@ export default function Interface() {
     console.log(commitment, nullifierHash);
   };
   const withdraw = async () => {
+    let aspAddress;
+    switch (asp) {
+      case "Basic ASP":
+        aspAddress = contractAddresses.BaseASP;
+        break;
+      case "Anon Adhar":
+        aspAddress = contractAddresses.aadharASP;
+        break;
+      case "Third ASP":
+        aspAddress = contractAddresses.usdcASP;
+        break;
+      default:
+        console.error("Unknown ASP selection");
+        return;
+    }
     const mixerAddress =
       token === "USDC"
         ? contractAddresses.usdcMixer
@@ -250,7 +268,8 @@ export default function Interface() {
     const withdrawProofValue = withdrawTextAreaRef.current
       ? withdrawTextAreaRef.current.value
       : "";
-    console.log("log3");
+
+    console.log("aspAddress", aspAddress);
 
     if (!withdrawProofValue) {
       alert("Please input the proof of deposit string.");
@@ -316,6 +335,7 @@ export default function Interface() {
       console.log(proof);
       console.log(publicSignals);
       const callInputs = [
+        aspAddress,
         proof.pi_a.slice(0, 2).map(utils.BN256ToHex),
         proof.pi_b
           .slice(0, 2)
@@ -382,6 +402,31 @@ export default function Interface() {
         const response = await axios(config);
         console.log(response);
         console.log("Anon Adhar logic executed");
+        const txHash = response?.data?.hash;
+        console.log("txHash", txHash);
+
+        const receipt = await waitForTransactionReceipt(txHash);
+        console.log(receipt);
+        const log = receipt.logs[0];
+
+        const decodedData = aspInterface.decodeEventLog(
+          "userAdded",
+          log.data,
+          log.topics
+        );
+
+        const aspElements = {
+          root: utils.BNToDecimal(decodedData.root),
+          hashPairing: decodedData.hashPairings.map((n) =>
+            utils.BNToDecimal(n)
+          ),
+          hashDirections: decodedData.pairDirection,
+        };
+
+        // updateAspData(btoa(JSON.stringify(aspElements)));
+        updateAspData(aspElements);
+        tempData = aspElements;
+        console.log("aspElements", aspElements);
       } else {
         console.log("account", account);
         var data = JSON.stringify({
@@ -481,7 +526,7 @@ export default function Interface() {
 
         <label htmlFor="token">Token</label>
         <select id="token" value={token} onChange={handleTokenChange}>
-          <option value="ETH">ETH</option>
+          <option value="Native Token">Native Token</option>
           <option value="USDC">USDC</option>
         </select>
 
@@ -512,9 +557,9 @@ export default function Interface() {
             <select id="asp" value={asp} onChange={handleASPChange}>
               <option value="Basic ASP">Basic ASP</option>
               <option value="Anon Adhar">Anon Adhar</option>
-              <option value="Third ASP">Third ASP</option>
+              <option value="Third ASP">USDC ASP</option>
             </select>
-            {showTextArea && (
+            {/* {showTextArea && (
               <textarea
                 value={proof}
                 onChange={(e) => setProof(e.target.value)}
@@ -522,7 +567,7 @@ export default function Interface() {
                 cols="50"
                 placeholder="Enter additional proof or data here"
               />
-            )}
+            )} */}
             <button onClick={withdraw} className={styles.withdrawButton}>
               Withdraw
             </button>

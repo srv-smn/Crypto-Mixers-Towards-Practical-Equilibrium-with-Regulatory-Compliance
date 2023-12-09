@@ -46,25 +46,25 @@ function MerkleTreeComponent() {
     },
     {
       heading: "Anyone Aadhar",
-      subheading: "Subheading for Anyone Aadhar",
+      subheading: "Generate and verify identity proofs",
       description:
-        "This description changes when 'Anyone Aadhar' is selected. It could contain information about the Aadhar tree, its purpose, and how it works.",
+        "The Anon Aadhaar circuit enables citizens with an Aadhaar card to generate zero-knowledge identity proofs, which can be verified both on and off the chain.",
     },
 
     {
-      heading: "Anyone Aadhar",
+      heading: "Third ASP",
       subheading: "Subheading for Anyone Aadhar",
       description:
         "This description changes when 'Anyone Aadhar' is selected. It could contain information about the Aadhar tree, its purpose, and how it works.",
     },
     {
-      heading: "Anyone Aadhar",
+      heading: "Fourth ASP",
       subheading: "Subheading for Anyone Aadhar",
       description:
         "This description changes when 'Anyone Aadhar' is selected. It could contain information about the Aadhar tree, its purpose, and how it works.",
     },
     {
-      heading: "Anyone Aadhar",
+      heading: "Fifth ASP",
       subheading: "Subheading for Anyone Aadhar",
       description:
         "This description changes when 'Anyone Aadhar' is selected. It could contain information about the Aadhar tree, its purpose, and how it works.",
