@@ -46,6 +46,8 @@ contract AnonASP {
         uint256 _commitment = _Commitment;
 
         require(nextLeafIdx < 2 ** treeLevel, "tree-full");
+        require( admin == msg.sender, "only Admin");
+
         bool _verifyProof = anonVerifier.verifyProof(_pA, _pB, _pC, _pubSignals);
         require(_verifyProof, "aadhar not verified");
 

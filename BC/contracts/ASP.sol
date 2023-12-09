@@ -43,6 +43,7 @@ contract ASP {
         uint256 _commitment = _Commitment;
 
         require(nextLeafIdx < 2 ** treeLevel, "tree-full");
+        require( admin == msg.sender, "only Admin");
 
         uint256 newRoot;
         uint256[10] memory hashPairings;

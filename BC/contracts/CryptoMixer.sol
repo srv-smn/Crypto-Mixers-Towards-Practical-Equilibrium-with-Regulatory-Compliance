@@ -2,7 +2,7 @@
 pragma solidity 0.8.17;
 
 import "./MiMCSponge.sol";
-import "./ReentrancyGuard.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 interface IVerifier {
     function verifyProof(uint[2] memory a, uint[2][2] memory b, uint[2] memory c, uint[4] memory input) external;

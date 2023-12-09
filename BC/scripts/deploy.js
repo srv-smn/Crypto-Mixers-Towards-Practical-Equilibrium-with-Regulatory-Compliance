@@ -32,11 +32,27 @@ async function main() {
   await cryptoMixer.deployed();
   console.log('CryptoMixer deployed at',cryptoMixer.address);
 
+  const USDC = await ethers.getContractFactory("USDC");
+  const usdc = await USDC.deploy();
+  await usdc.deployed();
+  console.log('USDC deployed at',usdc.address);
+
+
+  // deploy cryptoMixerERC20
+  const CryptoMixerERC20 = await ethers.getContractFactory("CryptoMixerERC20");
+  const cryptoMixerERC20 = await CryptoMixerERC20.deploy(hasher.address, verifier.address, asp.address, usdc.address);
+  await cryptoMixerERC20.deployed();
+  console.log('cryptoMixerERC20 deployed at',cryptoMixerERC20.address);
+
+
+
   // Verify contracts
   await verifyContract("Hasher", hasher.address);
   await verifyContract("Groth16Verifier", verifier.address);
   await verifyContract("ASP", asp.address, [hasher.address]);
+  await verifyContract("USDC", usdc.address);
   await verifyContract("CryptoMixer", cryptoMixer.address, [hasher.address, verifier.address, asp.address]);
+  await verifyContract("CryptoMixerERC20", cryptoMixerERC20.address, [hasher.address, verifier.address, asp.address, usdc.address]);
   
 }
 
