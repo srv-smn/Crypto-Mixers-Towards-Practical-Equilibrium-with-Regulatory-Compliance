@@ -1,6 +1,6 @@
 const ethers = require("ethers");
 const aspJSON = require("../abi/asp.json");
-const anonAspJSON = require("../abi/asp.json");
+const anonAspJSON = require("../abi/anonAsp.json");
 const aspABI = aspJSON.abi;
 const anonAspABI = anonAspJSON.abi;
 require("dotenv").config();
