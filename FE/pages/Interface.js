@@ -8,12 +8,15 @@ const cryptoMixerJSON = require("../json/CryptoMixer.json");
 const cryptoMixerABI = cryptoMixerJSON.abi;
 const cryptoMixerInterface = new ethers.utils.Interface(cryptoMixerABI);
 var axios = require("axios");
+
 const aspJSON = require("../json/Asp.json");
 const aspABI = aspJSON.abi;
 const aspInterface = new ethers.utils.Interface(aspABI);
 const erc20ABI = [
   "function approve(address spender, uint256 amount) external returns (bool)",
+  "function balanceOf(address account) external view returns (uint256)",
 ];
+
 let tempData = null;
 import { serialize } from "anon-aadhaar-pcd";
 import { useAnonAadhaar } from "anon-aadhaar-react";
@@ -34,6 +37,8 @@ export default function Interface() {
   // const [proof, setProof] = useState("");
   const [aspData, updateAspData] = useState(null);
   const [contractAddresses, setContractAddresses] = useState({});
+  const [ethBalance, setEthBalance] = useState("0");
+  const [usdcBalance, setUsdcBalance] = useState("0");
 
   useEffect(() => {
     if (anonAadhaar.status === "logged-in") {
@@ -60,6 +65,25 @@ export default function Interface() {
       loadAddresses();
     }
   }, [account]);
+  useEffect(() => {
+    const fetchBalances = async () => {
+      if (!account || !account.address) return;
+
+      const provider = new ethers.providers.Web3Provider(window.ethereum);
+      const balance = await provider.getBalance(account.address);
+      setEthBalance(ethers.utils.formatEther(balance));
+
+      const usdcContract = new ethers.Contract(
+        "0xA6048249e3F8D0676140c7A1CA3C7db426CB7266",
+        erc20ABI,
+        provider
+      );
+      const usdcBalance = await usdcContract.balanceOf(account.address);
+      setUsdcBalance(ethers.utils.formatUnits(usdcBalance, 6));
+    };
+
+    fetchBalances();
+  }, [account, activeTab]);
 
   const handleASPChange = (e) => {
     setAsp(e.target.value);
@@ -540,9 +564,15 @@ export default function Interface() {
   return (
     <div className={styles.interface}>
       {account ? (
-        <p>Account Address: {account.address}</p>
+        <div className={styles.accountInfo}>
+          <p>Account Address: {account.address}</p>
+          <div className={styles.tokenBalance}>
+            <span>Native Token Balance: {ethBalance}</span>
+            <span>USDC Balance: {usdcBalance}</span>
+          </div>
+        </div>
       ) : (
-        <p>No account connected</p>
+        <p className={styles.accountInfo}>No account connected</p>
       )}
       <div className={styles.tabs}>
         <button
@@ -584,10 +614,13 @@ export default function Interface() {
               Deposit
             </button>
             <textarea
+              readonly
               ref={proofTextAreaRef} // Attach the ref to the textarea
               className={styles.proof}
               value={proofElements} // Set the text content to proofElements state
-            />{" "}
+            >
+              {" "}
+            </textarea>
             <button onClick={copyProof} className={styles.copyButton}>
               Copy
             </button>

@@ -35,7 +35,7 @@ function Attestation() {
   }
 
   return (
-    <div>
+    <div className={styles.attestationContainer}>
       <button className={styles.eligibilityButton} onClick={checkEligibility}>
         Check Eligibility Criteria
       </button>

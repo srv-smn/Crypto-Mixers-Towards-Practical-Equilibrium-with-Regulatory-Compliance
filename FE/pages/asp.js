@@ -58,19 +58,6 @@ function MerkleTreeComponent() {
       description:
         "This check if you never been revoked, carrying good reputation for long duration of time, never involved in bad activities.",
     },
-    {
-      heading: "Fourth ASP",
-      subheading: "Subheading for Anyone Aadhar",
-      description:
-        "This description changes when 'Anyone Aadhar' is selected. It could contain information about the Aadhar tree, its purpose, and how it works.",
-    },
-    {
-      heading: "Fifth ASP",
-      subheading: "Subheading for Anyone Aadhar",
-      description:
-        "This description changes when 'Anyone Aadhar' is selected. It could contain information about the Aadhar tree, its purpose, and how it works.",
-    },
-    // ... add more descriptions for each tree
   ];
 
   const selectedTreeDetails = treeDetails[selectedTreeIndex] || {};
@@ -116,11 +103,18 @@ function MerkleTreeComponent() {
           <h2>{selectedTreeDetails.subheading}</h2>
           <p>{selectedTreeDetails.description}</p>
         </div>
-        {selectedTreeIndex === 1 && <AadhaarComponent />}
-        {selectedTreeIndex === 2 && <Attestation />}
+        {selectedTreeIndex === 1 && (
+          <div className={styles.componentSpacing}>
+            <AadhaarComponent />
+          </div>
+        )}
+        {selectedTreeIndex === 2 && (
+          <div className={styles.componentSpacing}>
+            <Attestation />
+          </div>
+        )}
       </div>
     </div>
   );
 }
-
 export default MerkleTreeComponent;

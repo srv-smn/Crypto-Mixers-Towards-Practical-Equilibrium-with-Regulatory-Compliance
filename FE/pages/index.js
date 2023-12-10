@@ -1,7 +1,6 @@
 import Interface from "./Interface";
 import Script from "next/script";
 
-
 const Index = () => {
   return (
     <div>
