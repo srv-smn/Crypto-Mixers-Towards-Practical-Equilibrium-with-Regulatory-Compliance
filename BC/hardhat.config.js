@@ -82,6 +82,6 @@ module.exports = {
     },
   },
   etherscan: {
-    apiKey: process.env.POLYGON_ETHERSCAN,
+    apiKey: process.env.MANTLE_ETHERSCAN,
   },
 };

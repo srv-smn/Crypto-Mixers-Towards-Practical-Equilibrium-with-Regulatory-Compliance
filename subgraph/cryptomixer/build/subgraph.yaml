@@ -6,7 +6,7 @@ dataSources:
     name: CryptoMixer
     network: mumbai
     source:
-      address: "0x0Df1A0d5d9DbF44D74a6E18B137B766d05cD6D55"
+      address: "0x0880Fc585Ea107A44f54eeC2d8a11cE0c55eB0AA"
       abi: CryptoMixer
       startBlock: 43191162
     mapping:
